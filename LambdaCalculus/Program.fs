@@ -198,12 +198,14 @@ module Expr =
             | expr -> failwithf "%A is not a β-redex" expr
 
     /// Evaluates the given expression lazily (normal order).
-    let rec eval =
-        function
+    let rec eval expr =
+        match expr with
             | Application (Lambda (param, body), arg) ->
                 substitute arg param body |> eval
             | Application (func, arg) ->
-                Application (eval func, eval arg ) |> eval
+                let expr' = Application (eval func, eval arg)
+                if expr' = expr then expr   // avoid infinite recursion
+                else eval expr'
             | Lambda (param, body) ->
                 Lambda (param, eval body)
             | expr -> expr
