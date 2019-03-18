@@ -196,7 +196,7 @@ module Expr =
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
-    /// Evaluates the given expression.
+    /// Evaluates the given expression lazily (normal order).
     let rec eval =
         function
             | Application (Lambda (param, body), arg) ->

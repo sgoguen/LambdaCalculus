@@ -97,3 +97,11 @@ type UnitTest() =
                 |> Expr.eval
                 |> Expr.toString
         Assert.AreEqual("(((z z) y) (y (z z)))", actual)
+
+    [<TestMethod>]
+    member __.Eval2() =
+        let actual =
+            Expr.parse "(λx.m (λx.(x x) λx.(x x)))"
+                |> Expr.eval
+                |> Expr.toString
+        Assert.AreEqual("m", actual)
