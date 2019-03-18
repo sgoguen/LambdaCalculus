@@ -2,6 +2,7 @@
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open LambdaCalculus
+open System
 
 [<TestClassAttribute>]
 type UnitTest() = 
@@ -10,37 +11,50 @@ type UnitTest() =
     member __.ToString1() =
         Assert.AreEqual(
             "λx.λy.x",
-            sprintf "%A" <| Term.ofExpr <@@(fun x y -> x)@@>)
+            sprintf "%A" <| Expr.ofQuot <@@(fun x y -> x)@@>)
 
     [<TestMethod>]
     member __.ToString2() =
         let z = 0
         Assert.AreEqual(
             "λx.λy.z",
-            sprintf "%A" <| Term.ofExpr <@@(fun x y -> z)@@>)
+            sprintf "%A" <| Expr.ofQuot <@@(fun x y -> z)@@>)
 
     [<TestMethod>]
     member __.OccursFree1() =
-        Assert.IsTrue(Term.occursFree "x"
+        Assert.IsTrue(Expr.occursFree "x"
             <| Variable "x")
 
     [<TestMethod>]
     member __.OccursFree2() =
-        Assert.IsFalse(Term.occursFree "x"
+        Assert.IsFalse(Expr.occursFree "x"
             <| Variable "y")
 
     [<TestMethod>]
     member __.OccursFree3() =
-        Assert.IsTrue(Term.occursFree "x"
+        Assert.IsTrue(Expr.occursFree "x"
             <| Application (Variable "x", Variable "y"))
 
     [<TestMethod>]
     member __.OccursFree4() =
-        Assert.IsFalse(Term.occursFree "x"
-            <| Term.ofExpr <@@(fun z x -> x)@@>)
+        Assert.IsFalse(Expr.occursFree "x"
+            <| Expr.ofQuot <@@(fun z x -> x)@@>)
 
     [<TestMethod>]
     member __.OccursFree5() =
         let x = ()
-        Assert.IsTrue(Term.occursFree "x"
-            <| Term.ofExpr <@@(fun z -> x)@@>)
+        Assert.IsTrue(Expr.occursFree "x"
+            <| Expr.ofQuot <@@(fun z -> x)@@>)
+
+    [<TestMethod>]
+    member __.OccursFree6() =
+        let x = ()
+        Assert.IsTrue(Expr.occursFree "x"
+            <| Expr.ofQuot <@@(fun x -> x) x@@>)
+
+    [<TestMethod>]
+    member __.AlphaConvert() =
+        let before = Expr.ofQuot <@@(fun x y -> x)@@>
+        let after = Expr.ofQuot <@@(fun z y -> z)@@>
+        Assert.AreEqual(after, Expr.alphaConvert "z" before)
+       
