@@ -130,6 +130,13 @@ module Expr =
                             failwithf "Exhausted variable names for α-conversion")
                 else Lambda (param', subst body')   // substitute new expression in lambda body
 
+    /// Reduces a β-reduction expression ("β-redex").
+    let betaReduction =
+        function
+            | Application (Lambda (param, body), arg) ->
+                substitute arg param body
+            | expr -> failwithf "%A is not a β-redex" expr
+
     let ofQuot = Expr.ofQuot
     let True = ofQuot <@@fun x y -> x@@>
     let Identity = ofQuot <@@fun x -> x@@>

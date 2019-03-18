@@ -53,7 +53,7 @@ type UnitTest() =
             <| Expr.ofQuot <@@(fun x -> x) x@@>)
 
     [<TestMethod>]
-    member __.αConvert() =
+    member __.αConvert1() =
         let before = Expr.ofQuot <@@fun x y -> x@@>
         let after = Expr.ofQuot <@@fun z y -> z@@>
         Assert.AreEqual(after, Expr.alphaConvert "z" before)
@@ -138,3 +138,16 @@ type UnitTest() =
 
         let actual = Expr.substitute arg param body
         Assert.AreEqual(body, actual)
+
+    /// β-reducing (λx.(x v) (z (v u))) would yield the expression ((z (v u)) v)
+    [<TestMethod>]
+    member __.βReduce1() =
+
+        let expr =
+            Application (
+                let v = () in Expr.ofQuot <@@fun x -> x v@@>,
+                Application (
+                    Variable "z",
+                    Application (Variable "v", Variable "u")))
+        let actual = expr |> Expr.betaReduction
+        Assert.AreEqual("((z (v u)) v)", actual.ToString())
