@@ -90,7 +90,8 @@ module Expr =
                 Lambda (newName, convert param newName body)
             | _ -> failwithf "α-conversion not supported for %A" lambda
 
-    let substitute newExpr lambda =
+    /// Replaces all occurrences of param with arg in body.
+    let rec substitute arg param body =
 
         let allVariables expr =
             let rec loop expr : seq<string> =
@@ -107,34 +108,27 @@ module Expr =
                 }
             loop expr |> Set.ofSeq
 
-        /// Replaces all occurrences of oldParam with newExpr in oldExpr.
-        let rec subst oldParam oldExpr =
-            let subst = subst oldParam
-            match oldExpr with
-                | Variable name ->
-                    if name = oldParam then newExpr      // replace this variable with the new expression
-                    else oldExpr                         // no-op
-                | Application (func, arg) ->
-                    Application (subst func, subst arg)
-                | Lambda (param, body) ->
-                    if param = oldParam then oldExpr     // no-op (don't actually substitute anything)
-                    elif occursFree param newExpr then   // avoid variable capture via α-conversion
-                        let allVars = allVariables oldExpr
-                        ['a' .. 'z']
-                            |> Seq.map (fun c -> c.ToString())
-                            |> Seq.tryFind (fun newName ->
-                                not <| allVars.Contains(newName))
-                            |> Option.map (fun newName ->
-                                alphaConvert newName oldExpr |> subst)
-                            |> Option.defaultWith (fun () ->
-                                failwithf "Exhausted variable names for α-conversion")
-                    else Lambda (param, subst body)      // substitute new expression in lambda body
-                        
-
-        match lambda with
-            | Lambda (param, body) ->
-                subst param body
-            | _ -> failwithf "substitution not supported for %A" lambda
+        let subst = substitute arg param
+        match body with
+            | Variable name ->
+                if name = param then arg            // replace this variable with the new expression
+                else body                           // no-op
+            | Application (func, arg) ->
+                Application (subst func, subst arg)
+            | Lambda (param', body') ->
+                if param' = param then body         // no-op (don't actually substitute anything)
+                elif occursFree param' arg then     // avoid variable capture via α-conversion
+                    let allVars = allVariables body'
+                    ['a' .. 'z']
+                        |> Seq.map (fun c -> c.ToString())
+                        |> Seq.tryFind (fun newName ->
+                            not <| allVars.Contains(newName))
+                        |> Option.map (fun newName ->
+                            alphaConvert newName body
+                                |> subst)
+                        |> Option.defaultWith (fun () ->
+                            failwithf "Exhausted variable names for α-conversion")
+                else Lambda (param', subst body')   // substitute new expression in lambda body
 
     let ofQuot = Expr.ofQuot
     let True = ofQuot <@@fun x y -> x@@>
