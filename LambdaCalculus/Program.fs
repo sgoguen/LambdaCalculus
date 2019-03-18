@@ -1,4 +1,6 @@
-﻿namespace LambdaCalculus
+﻿/// Based on https://opendsa-server.cs.vt.edu/ODSA/Books/PL/html/index.html#lambda-calculus
+
+namespace LambdaCalculus
 
 open System
 
@@ -24,8 +26,10 @@ module Term =
         open Microsoft.FSharp.Quotations.Patterns
         let rec ofExpr =
             function
-                | Var var ->
+                | Var var ->   // bound
                     Variable var.Name
+                | ValueWithName (_, _, name) ->
+                    Variable name
                 | Application (func, arg) ->
                     Application (ofExpr func, ofExpr arg)
                 | Lambda (param, body) ->
