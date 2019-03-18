@@ -219,13 +219,13 @@ module Lang =
     let And = sprintf "λp.λq.((p q) %A)" False |> Expr.parse
     let Or = sprintf "λp.λq.((p %A) q)" True |> Expr.parse
 
-    let Zero = <@@ fun f x -> x @@> |> Expr.ofQuot   // same as False
-    let One = <@@ fun f x -> f x @@> |> Expr.ofQuot
-    let Two = <@@ fun f x -> f (f x) @@> |> Expr.ofQuot
+    let Zero =  <@@ fun f x -> x @@> |> Expr.ofQuot   // same as False
+    let One =   <@@ fun f x -> f x @@> |> Expr.ofQuot
+    let Two =   <@@ fun f x -> f (f x) @@> |> Expr.ofQuot
     let Three = <@@ fun f x -> f (f (f x)) @@> |> Expr.ofQuot
-    let Four = <@@ fun f x -> f (f (f (f x))) @@> |> Expr.ofQuot
-    let Five = <@@ fun f x -> f (f (f (f (f x)))) @@> |> Expr.ofQuot
-    let Six = <@@ fun f x -> f (f (f (f (f (f x))))) @@> |> Expr.ofQuot
+    let Four =  <@@ fun f x -> f (f (f (f x))) @@> |> Expr.ofQuot
+    let Five =  <@@ fun f x -> f (f (f (f (f x)))) @@> |> Expr.ofQuot
+    let Six =   <@@ fun f x -> f (f (f (f (f (f x))))) @@> |> Expr.ofQuot
 
     let Succ = <@@ fun n f x -> f ((n f) x) @@> |> Expr.ofQuot
     let Plus = <@@ fun m n f x -> (n f) ((m f) x) @@> |> Expr.ofQuot
