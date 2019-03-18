@@ -14,6 +14,9 @@ type UnitTest() =
             (Expr.parse body)
             |> Expr.toString
 
+    let run str =
+        str |> Expr.parse |> Expr.eval
+
     [<TestMethod>]
     member __.ToString1() =
         Assert.AreEqual(
@@ -92,67 +95,50 @@ type UnitTest() =
 
     [<TestMethod>]
     member __.Eval1() =
-        let actual =
-            Expr.parse "(λx.((x y) (y x)) (λw.(w w) z))"
-                |> Expr.eval
-                |> Expr.toString
-        Assert.AreEqual("(((z z) y) (y (z z)))", actual)
+        let expr = run "(λx.((x y) (y x)) (λw.(w w) z))"
+        Assert.AreEqual("(((z z) y) (y (z z)))", expr.ToString())
 
     [<TestMethod>]
     member __.Eval2() =
-        let actual =
-            Expr.parse "(λx.m (λx.(x x) λx.(x x)))"
-                |> Expr.eval
-                |> Expr.toString
-        Assert.AreEqual("m", actual)
+        let expr = run "(λx.m (λx.(x x) λx.(x x)))"
+        Assert.AreEqual("m", expr.ToString())
 
     [<TestMethod>]
     member __.Eval3() =
         let expr =
             sprintf "((%A %A) %A)" And True False
-                |> Expr.parse
-                |> Expr.eval
+                |> run
         Assert.AreEqual(False, expr)
 
     [<TestMethod>]
     member __.Eval4() =
         let expr =
             sprintf "((%A %A) %A)" Or True False
-                |> Expr.parse
-                |> Expr.eval
+                |> run
         Assert.AreEqual(True, expr)
 
     [<TestMethod>]
     member __.Eval5() =
         let expr =
             sprintf "(((%A %A) %A) %A)" If True True False
-                |> Expr.parse
-                |> Expr.eval
+                |> run
         Assert.AreEqual(True, expr)
 
     [<TestMethod>]
     member __.Eval6() =
 
         let expr =
-            sprintf "(%A %A)" Succ Zero
-                |> Expr.parse
-                |> Expr.eval
+            sprintf "(%A %A)" Succ Zero |> run
         Assert.AreEqual(One, expr)
 
         let expr =
-            sprintf "(%A %A)" Succ expr
-                |> Expr.parse
-                |> Expr.eval
+            sprintf "(%A %A)" Succ expr |> run
         Assert.AreEqual(Two, expr)
 
         let expr =
-            sprintf "((%A %A) %A)" Plus One Two
-                |> Expr.parse
-                |> Expr.eval
+            sprintf "((%A %A) %A)" Plus One Two |> run
         Assert.AreEqual(Three, expr)
 
         let expr =
-            sprintf "((%A %A) %A)" Mult Two Three
-                |> Expr.parse
-                |> Expr.eval
+            sprintf "((%A %A) %A)" Mult Two Three |> run
         Assert.AreEqual(Six, expr)
