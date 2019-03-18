@@ -113,3 +113,46 @@ type UnitTest() =
                 |> Expr.parse
                 |> Expr.eval
         Assert.AreEqual(False, expr)
+
+    [<TestMethod>]
+    member __.Eval4() =
+        let expr =
+            sprintf "((%A %A) %A)" Or True False
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(True, expr)
+
+    [<TestMethod>]
+    member __.Eval5() =
+        let expr =
+            sprintf "(((%A %A) %A) %A)" If True True False
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(True, expr)
+
+    [<TestMethod>]
+    member __.Eval6() =
+
+        let expr =
+            sprintf "(%A %A)" Succ Zero
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(One, expr)
+
+        let expr =
+            sprintf "(%A %A)" Succ expr
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(Two, expr)
+
+        let expr =
+            sprintf "((%A %A) %A)" Plus One Two
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(Three, expr)
+
+        let expr =
+            sprintf "((%A %A) %A)" Mult Two Three
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(Six, expr)

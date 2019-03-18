@@ -213,30 +213,27 @@ module Expr =
 [<AutoOpen>]
 module Lang =
 
-    // let expand (expr)
+    let True = <@@ fun x y -> x @@> |> Expr.ofQuot
+    let False = <@@ fun x y -> y @@> |> Expr.ofQuot
+    let If = <@@ fun b x y -> b x y @@> |> Expr.ofQuot
+    let And = sprintf "λp.λq.((p q) %A)" False |> Expr.parse
+    let Or = sprintf "λp.λq.((p %A) q)" True |> Expr.parse
 
-    let True = Expr.ofQuot <@@ fun x y -> x @@>
-    let False = Expr.ofQuot <@@ fun x y -> y @@>
-    let And =
-        sprintf "λp.λq.((p q) %A)" False
-            |> Expr.parse
+    let Zero = <@@ fun f x -> x @@> |> Expr.ofQuot   // same as False
+    let One = <@@ fun f x -> f x @@> |> Expr.ofQuot
+    let Two = <@@ fun f x -> f (f x) @@> |> Expr.ofQuot
+    let Three = <@@ fun f x -> f (f (f x)) @@> |> Expr.ofQuot
+    let Four = <@@ fun f x -> f (f (f (f x))) @@> |> Expr.ofQuot
+    let Five = <@@ fun f x -> f (f (f (f (f x)))) @@> |> Expr.ofQuot
+    let Six = <@@ fun f x -> f (f (f (f (f (f x))))) @@> |> Expr.ofQuot
 
-    (*
-    let If = Expr.parse "^b.^x.^y.((b x) y)"
-    let And =
-        sprintf "^x.^y.(((%A x) y) %A)" If False
-            |> Expr.parse
-    *)
+    let Succ = <@@ fun n f x -> f ((n f) x) @@> |> Expr.ofQuot
+    let Plus = <@@ fun m n f x -> (n f) ((m f) x) @@> |> Expr.ofQuot
+    let Mult = <@@ fun m n f -> m (n f) @@> |> Expr.ofQuot
 
 module Program =
 
     [<EntryPoint>]
     let main argv =
         Console.OutputEncoding <- Text.Encoding.Unicode
-        let expr =
-            sprintf "((%A %A) %A)" And True False
-                |> Expr.parse
-        let expr' = Expr.eval expr
-        printfn "%A" expr
-        printfn "%A" expr'
         0
