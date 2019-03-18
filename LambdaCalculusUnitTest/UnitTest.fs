@@ -142,7 +142,6 @@ type UnitTest() =
     /// β-reducing (λx.(x v) (z (v u))) would yield the expression ((z (v u)) v)
     [<TestMethod>]
     member __.βReduce1() =
-
         let expr =
             Application (
                 let v = () in Expr.ofQuot <@@fun x -> x v@@>,
@@ -151,3 +150,27 @@ type UnitTest() =
                     Application (Variable "v", Variable "u")))
         let actual = expr |> Expr.betaReduction
         Assert.AreEqual("((z (v u)) v)", actual.ToString())
+
+    /// (λx.((x y) (y x)) (λw.(w w) z))
+    [<TestMethod>]
+    member __.Eval1() =
+        let expr =
+            Application (
+                Lambda (
+                    "x",
+                    Application (
+                        Application (
+                            Variable "x",
+                            Variable "y"),
+                        Application (
+                            Variable "y",
+                            Variable "x"))),
+                Application (
+                    Lambda (
+                        "w",
+                        Application (
+                            Variable "w",
+                            Variable "w")),
+                        Variable "z"))
+        Assert.AreEqual("(λx.((x y) (y x)) (λw.(w w) z))", expr.ToString())
+        Assert.AreEqual("(((z z) y) (y (z z)))", (Expr.eval expr).ToString())

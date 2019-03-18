@@ -133,12 +133,25 @@ module Expr =
                             failwithf "Exhausted variable names for α-conversion")
                 else Lambda (param', subst body')   // substitute new expression in lambda body
 
-    /// Reduces a β-reduction expression ("β-redex").
+    /// Reduces a β-reduction expression ("β-redex"). This is
+    /// function evaluation, which "calls" the given lambda
+    /// with the given argument.
     let betaReduction =
         function
             | Application (Lambda (param, body), arg) ->
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
+
+    /// Evaluates the given expression.
+    let rec eval =
+        function
+            | Application (Lambda (param, body), arg) ->
+                substitute arg param body |> eval
+            | Application (func, arg) ->
+                Application (eval func, eval arg)
+            | Lambda (param, body) ->
+                Lambda (param, eval body)
+            | expr -> expr        
 
     let ofQuot = FSharp.ofQuot
     let True = ofQuot <@@fun x y -> x@@>
@@ -149,7 +162,7 @@ module Program =
     [<EntryPoint>]
     let main argv =
         Console.OutputEncoding <- Text.Encoding.Unicode
-        let f = Application (Expr.Identity, Variable "y")
-        printfn "%A" f
-        printfn "%A" Expr.True
+        let y = ()
+        let f = Expr.ofQuot <@@(fun x -> x) y@@>
+        printfn "%A" (Expr.eval f)
         0
