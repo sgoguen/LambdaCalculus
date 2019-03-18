@@ -5,7 +5,14 @@ open LambdaCalculus
 open System
 
 [<TestClassAttribute>]
-type UnitTest() = 
+type UnitTest() =
+
+    let subst arg param body =
+        Expr.substitute
+            (Expr.parse arg)
+            param
+            (Expr.parse body)
+            |> Expr.toString
 
     [<TestMethod>]
     member __.ToString1() =
@@ -57,120 +64,36 @@ type UnitTest() =
         let before = Expr.ofQuot <@@fun x y -> x@@>
         let after = Expr.ofQuot <@@fun z y -> z@@>
         Assert.AreEqual(after, Expr.alphaConvert "z" before)
+
+    [<TestMethod>]
+    member __.Parse1() =
+        let str = "λx.y"
+        Assert.AreEqual(str, str |> Expr.parse |> Expr.toString)
        
-    /// subst((w z), y, λx.y) -> λx.(w z)
     [<TestMethod>]
     member __.Substitute1() =
+        Assert.AreEqual(
+            "λx.(w z)",
+            subst "(w z)" "y" "λx.y")
 
-        let w () = ()
-        let z = ()
-        let arg = Expr.ofQuot <@@w z@@>
-        let param = "y"
-        let body =
-            let y = ()
-            Expr.ofQuot <@@fun x -> y@@>
-
-        let actual = Expr.substitute arg param body
-        let expected = Expr.ofQuot <@@fun x -> w z@@>
-        Assert.AreEqual(expected, actual)
-
-    /// subst((w x), y, λx.x) -> λa.a
     [<TestMethod>]
     member __.Substitute2() =
+        Assert.AreEqual(
+            "λa.a",
+            subst "(w x)" "y" "λx.x")
 
-        let arg =
-            let w () = ()
-            let x = ()
-            Expr.ofQuot <@@w x@@>
-        let param = "y"
-        let body = Expr.ofQuot <@@fun x -> x@@>
-
-        let actual = Expr.substitute arg param body
-        let expected = Expr.ofQuot <@@fun a -> a@@>
-        Assert.AreEqual(expected, actual)
-
-    /// subst( (λy.y (y x)), y, λy.x )
-    [<TestMethod>]
-    member __.Substitute3() =
-
-        let arg =
-            let x = ()
-            let y () = ()
-            Expr.ofQuot <@@(fun y -> y) (y x)@@>
-        let param = "y"
-        let body =
-            let x = ()
-            Expr.ofQuot <@@fun y -> x@@>
-
-        let actual = Expr.substitute arg param body
-        let expected = body
-        Assert.AreEqual(expected, actual)
-
-    /// subst( (λz.z x), x, (((z z) λz.x) λx.x) )
-    [<TestMethod>]
-    member __.Substitute4() =
-
-        let arg =
-            let x = ()
-            Expr.ofQuot <@@(fun z -> z) x@@>
-        let param = "x"
-        let body =
-            let x = ()
-            let z_z = Application (Variable "z", Variable "z")
-            Application (
-                Application (z_z, Expr.ofQuot <@@fun z -> x@@>),
-                Expr.ofQuot <@@fun x -> x@@>)
-        Assert.AreEqual("(((z z) λz.x) λx.x)", body.ToString())
-
-        let actual = Expr.substitute arg param body
-        Assert.AreEqual("(((z z) λz.(λz.z x)) λx.x)", actual.ToString())
-
-    /// subst( ((z z) x), y, λy.λx.(y x) )
-    [<TestMethod>]
-    member __.Substitute5() =
-
-        let arg =
-            Application (
-                Application (Variable "z", Variable "z"),
-                Variable "x")
-        let param = "y"
-        let body = Expr.ofQuot <@@fun y x -> y x@@>
-
-        let actual = Expr.substitute arg param body
-        Assert.AreEqual(body, actual)
-
-    /// β-reducing (λx.(x v) (z (v u))) would yield the expression ((z (v u)) v)
     [<TestMethod>]
     member __.βReduce1() =
-        let expr =
-            Application (
-                let v = () in Expr.ofQuot <@@fun x -> x v@@>,
-                Application (
-                    Variable "z",
-                    Application (Variable "v", Variable "u")))
-        let actual = expr |> Expr.betaReduction
-        Assert.AreEqual("((z (v u)) v)", actual.ToString())
+        let actual =
+            Expr.parse "(λx.(x v) (z (v u)))"
+                |> Expr.betaReduction
+                |> Expr.toString
+        Assert.AreEqual("((z (v u)) v)", actual)
 
-    /// (λx.((x y) (y x)) (λw.(w w) z))
     [<TestMethod>]
     member __.Eval1() =
-        let expr =
-            Application (
-                Lambda (
-                    "x",
-                    Application (
-                        Application (
-                            Variable "x",
-                            Variable "y"),
-                        Application (
-                            Variable "y",
-                            Variable "x"))),
-                Application (
-                    Lambda (
-                        "w",
-                        Application (
-                            Variable "w",
-                            Variable "w")),
-                        Variable "z"))
-        Assert.AreEqual("(λx.((x y) (y x)) (λw.(w w) z))", expr.ToString())
-        Assert.AreEqual("(((z z) y) (y (z z)))", (Expr.eval expr).ToString())
+        let actual =
+            Expr.parse "(λx.((x y) (y x)) (λw.(w w) z))"
+                |> Expr.eval
+                |> Expr.toString
+        Assert.AreEqual("(((z z) y) (y (z z)))", actual)

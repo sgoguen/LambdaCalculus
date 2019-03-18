@@ -34,6 +34,7 @@ module Expr =
 
     /// Interop with F# quotations.
     module private FSharp =
+
         open Microsoft.FSharp.Quotations.Patterns
 
         /// Constructs a lambda expression from an F# quotation.
@@ -47,6 +48,59 @@ module Expr =
                 | Lambda (param, body) ->
                     Lambda (param.Name, ofQuot body)
                 | expr -> failwithf "Not supported: %A" expr
+
+    let ofQuot = FSharp.ofQuot
+
+    module private Parse =
+
+        open FParsec
+
+        let private parseExpr, private parseExprRef =
+            createParserForwardedToRef<Expr, unit>()
+
+        let private parseName =
+            many1Chars (satisfy (fun c ->
+                Char.IsLetterOrDigit(c) && (c <> 'λ')))
+
+        let private parseVariable =
+            parseName
+                |>> Variable
+
+        let private parseApplication =
+            pipe5
+                (skipChar '(')
+                parseExpr
+                (many1 <| skipChar ' ')
+                parseExpr
+                (skipChar ')')
+                (fun _ func _ arg _ ->
+                    Application (func, arg))
+
+        let private parseLambda =
+            pipe4
+                (skipAnyOf ['λ'; '^'; '\\'])
+                parseName
+                (skipChar '.')
+                parseExpr
+                (fun _ param _ body ->
+                    Lambda (param, body))
+
+        do parseExprRef :=
+            choice [
+                parseVariable
+                parseApplication
+                parseLambda
+            ]
+
+        let parse str =
+            match run !parseExprRef str with
+                | Success (expr, _, _) -> expr
+                | Failure (msg, _, _) -> failwith msg
+
+    let parse = Parse.parse
+
+    let toString (expr : Expr) =
+        expr.ToString()
 
     /// Indicates whether the given variable occurs within a lambda expression (either
     /// bound or free).
@@ -153,7 +207,6 @@ module Expr =
                 Lambda (param, eval body)
             | expr -> expr        
 
-    let ofQuot = FSharp.ofQuot
     let True = ofQuot <@@fun x y -> x@@>
     let Identity = ofQuot <@@fun x -> x@@>
 
