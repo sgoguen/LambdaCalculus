@@ -1,9 +1,9 @@
 ﻿/// Based on https://opendsa-server.cs.vt.edu/ODSA/Books/PL/html/index.html#lambda-calculus
-
 namespace LambdaCalculus
 
 open System
 
+/// A variable in a lambda expression.
 type Variable = string (*name*)
 
 /// Lambda expression.
@@ -19,24 +19,27 @@ type Expr =
     /// E.g. "λx.y"
     | Lambda of (Variable (*parameter*) * Expr (*body*))
 
+    /// Converts expression to string.
     member this.String =
         match this with
             | Variable name -> name
             | Application (func, arg) -> sprintf "(%A %A)" func arg
             | Lambda (param, body) -> sprintf "λ%s.%A" param body
 
+    /// Converts expression to string.
     override this.ToString() = this.String
 
+/// Lambda expression functions.
 module Expr =
 
-    module private Expr =
+    /// Interop with F# quotations.
+    module private FSharp =
         open Microsoft.FSharp.Quotations.Patterns
 
         /// Constructs a lambda expression from an F# quotation.
         let rec ofQuot =
             function
-                | Var var ->   // bound
-                    Variable var.Name
+                | Var var -> Variable var.Name    // bound
                 | ValueWithName (_, _, name) ->   // free
                     Variable name
                 | Application (func, arg) ->
@@ -75,11 +78,11 @@ module Expr =
             match expr with
                 | Variable name ->
                     assert(name <> newName)
-                    if name = oldName then Variable newName
+                    if name = oldName then Variable newName   // rename variable
                     else expr
                 | Application (func, arg) ->
                     Application ((convert func), (convert arg))
-                | Lambda (param, body) ->   // inner lambda
+                | Lambda (param, body) ->                     // inner lambda
                     assert(param <> newName)
                     Lambda (param, convert body)
 
@@ -93,12 +96,12 @@ module Expr =
     /// Replaces all occurrences of param with arg in body.
     let rec substitute arg param body =
 
+        /// Answers the set of all variables in the given expression.
         let allVariables expr =
             let rec loop expr : seq<string> =
                 seq {
                     match expr with
-                        | Variable name ->
-                            yield name
+                        | Variable name -> yield name
                         | Application (func, arg) ->
                             yield! loop func
                             yield! loop arg
@@ -117,7 +120,7 @@ module Expr =
                 Application (subst func, subst arg)
             | Lambda (param', body') ->
                 if param' = param then body         // no-op (don't actually substitute anything)
-                elif occursFree param' arg then     // avoid variable capture via α-conversion
+                elif occursFree param' arg then     // avoid variable capture
                     let allVars = allVariables body'
                     ['a' .. 'z']
                         |> Seq.map (fun c -> c.ToString())
@@ -137,7 +140,7 @@ module Expr =
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
-    let ofQuot = Expr.ofQuot
+    let ofQuot = FSharp.ofQuot
     let True = ofQuot <@@fun x y -> x@@>
     let Identity = ofQuot <@@fun x -> x@@>
 
