@@ -18,14 +18,14 @@ type UnitTest() =
     member __.ToString1() =
         Assert.AreEqual(
             "λx.λy.x",
-            sprintf "%A" <| Expr.ofQuot <@@(fun x y -> x)@@>)
+            sprintf "%A" <| Expr.ofQuot <@@ (fun x y -> x) @@>)
 
     [<TestMethod>]
     member __.ToString2() =
         let z = 0
         Assert.AreEqual(
             "λx.λy.z",
-            sprintf "%A" <| Expr.ofQuot <@@(fun x y -> z)@@>)
+            sprintf "%A" <| Expr.ofQuot <@@ (fun x y -> z) @@>)
 
     [<TestMethod>]
     member __.OccursFree1() =
@@ -45,24 +45,24 @@ type UnitTest() =
     [<TestMethod>]
     member __.OccursFree4() =
         Assert.IsFalse(Expr.occursFree "x"
-            <| Expr.ofQuot <@@fun z x -> x@@>)
+            <| Expr.ofQuot <@@ fun z x -> x @@>)
 
     [<TestMethod>]
     member __.OccursFree5() =
         let x = ()
         Assert.IsTrue(Expr.occursFree "x"
-            <| Expr.ofQuot <@@fun z -> x@@>)
+            <| Expr.ofQuot <@@ fun z -> x @@>)
 
     [<TestMethod>]
     member __.OccursFree6() =
         let x = ()
         Assert.IsTrue(Expr.occursFree "x"
-            <| Expr.ofQuot <@@(fun x -> x) x@@>)
+            <| Expr.ofQuot <@@ (fun x -> x) x @@>)
 
     [<TestMethod>]
     member __.αConvert1() =
-        let before = Expr.ofQuot <@@fun x y -> x@@>
-        let after = Expr.ofQuot <@@fun z y -> z@@>
+        let before = Expr.ofQuot <@@ fun x y -> x @@>
+        let after = Expr.ofQuot <@@ fun z y -> z @@>
         Assert.AreEqual(after, Expr.alphaConvert "z" before)
 
     [<TestMethod>]
@@ -105,3 +105,11 @@ type UnitTest() =
                 |> Expr.eval
                 |> Expr.toString
         Assert.AreEqual("m", actual)
+
+    [<TestMethod>]
+    member __.Eval3() =
+        let expr =
+            sprintf "((%A %A) %A)" And True False
+                |> Expr.parse
+                |> Expr.eval
+        Assert.AreEqual(False, expr)

@@ -93,7 +93,8 @@ module Expr =
             ]
 
         let parse str =
-            match run !parseExprRef str with
+            let parser = !parseExprRef .>> eof   // force consumption of entire string
+            match run parser str with
                 | Success (expr, _, _) -> expr
                 | Failure (msg, _, _) -> failwith msg
 
@@ -202,20 +203,38 @@ module Expr =
             | Application (Lambda (param, body), arg) ->
                 substitute arg param body |> eval
             | Application (func, arg) ->
-                Application (eval func, eval arg)
+                Application (eval func, eval arg ) |> eval
             | Lambda (param, body) ->
                 Lambda (param, eval body)
-            | expr -> expr        
+            | expr -> expr
 
-    let True = ofQuot <@@fun x y -> x@@>
-    let Identity = ofQuot <@@fun x -> x@@>
+[<AutoOpen>]
+module Lang =
+
+    // let expand (expr)
+
+    let True = Expr.ofQuot <@@ fun x y -> x @@>
+    let False = Expr.ofQuot <@@ fun x y -> y @@>
+    let And =
+        sprintf "λp.λq.((p q) %A)" False
+            |> Expr.parse
+
+    (*
+    let If = Expr.parse "^b.^x.^y.((b x) y)"
+    let And =
+        sprintf "^x.^y.(((%A x) y) %A)" If False
+            |> Expr.parse
+    *)
 
 module Program =
 
     [<EntryPoint>]
     let main argv =
         Console.OutputEncoding <- Text.Encoding.Unicode
-        let y = ()
-        let f = Expr.ofQuot <@@(fun x -> x) y@@>
-        printfn "%A" (Expr.eval f)
+        let expr =
+            sprintf "((%A %A) %A)" And True False
+                |> Expr.parse
+        let expr' = Expr.eval expr
+        printfn "%A" expr
+        printfn "%A" expr'
         0
