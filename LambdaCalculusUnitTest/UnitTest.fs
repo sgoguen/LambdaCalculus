@@ -38,13 +38,13 @@ type UnitTest() =
     [<TestMethod>]
     member __.OccursFree4() =
         Assert.IsFalse(Expr.occursFree "x"
-            <| Expr.ofQuot <@@(fun z x -> x)@@>)
+            <| Expr.ofQuot <@@fun z x -> x@@>)
 
     [<TestMethod>]
     member __.OccursFree5() =
         let x = ()
         Assert.IsTrue(Expr.occursFree "x"
-            <| Expr.ofQuot <@@(fun z -> x)@@>)
+            <| Expr.ofQuot <@@fun z -> x@@>)
 
     [<TestMethod>]
     member __.OccursFree6() =
@@ -53,8 +53,19 @@ type UnitTest() =
             <| Expr.ofQuot <@@(fun x -> x) x@@>)
 
     [<TestMethod>]
-    member __.AlphaConvert() =
-        let before = Expr.ofQuot <@@(fun x y -> x)@@>
-        let after = Expr.ofQuot <@@(fun z y -> z)@@>
+    member __.αConvert() =
+        let before = Expr.ofQuot <@@fun x y -> x@@>
+        let after = Expr.ofQuot <@@fun z y -> z@@>
         Assert.AreEqual(after, Expr.alphaConvert "z" before)
        
+    [<TestMethod>]
+    member __.Substitute1() =
+        let w () = ()
+        let z = ()
+        let newExpr = Expr.ofQuot <@@w z@@>
+        let oldExpr =
+            let y = ()
+            Expr.ofQuot <@@fun x -> y@@>
+        let actual = oldExpr |> Expr.substitute newExpr
+        let expected = Expr.ofQuot <@@fun x -> w z@@>
+        Assert.AreEqual(expected, actual)

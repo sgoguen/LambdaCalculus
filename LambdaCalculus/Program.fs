@@ -25,6 +25,8 @@ type Expr =
             | Application (func, arg) -> sprintf "(%A %A)" func arg
             | Lambda (param, body) -> sprintf "λ%s.%A" param body
 
+    override this.ToString() = this.String
+
 module Expr =
 
     module private Expr =
@@ -43,7 +45,8 @@ module Expr =
                     Lambda (param.Name, ofQuot body)
                 | expr -> failwithf "Not supported: %A" expr
 
-    /// Indicates whether the given variable occurs within a lambda expression.
+    /// Indicates whether the given variable occurs within a lambda expression (either
+    /// bound or free).
     let rec occurs name =
         function
             | Variable name' ->
@@ -65,7 +68,7 @@ module Expr =
                 (param <> name) && occursFree name body
 
     /// α-conversion.
-    let alphaConvert newName expr =
+    let alphaConvert newName lambda =
 
         let rec convert oldName newName expr =
             let convert = convert oldName newName
@@ -78,18 +81,64 @@ module Expr =
                     Application ((convert func), (convert arg))
                 | Lambda (param, body) ->   // inner lambda
                     assert(param <> newName)
-                    Lambda(param, convert body)
+                    Lambda (param, convert body)
 
-        if occurs newName expr then
-            failwithf "New name '%s' already appears in %A" newName expr
-        match expr with
+        if occurs newName lambda then
+            failwithf "New name '%s' already appears in %A" newName lambda
+        match lambda with
             | Lambda (param, body) ->
                 Lambda (newName, convert param newName body)
-            | _ -> failwithf "α-conversion not supported for %A" expr
+            | _ -> failwithf "α-conversion not supported for %A" lambda
+
+    let substitute newExpr lambda =
+
+        let allVariables expr =
+            let rec loop expr : seq<string> =
+                seq {
+                    match expr with
+                        | Variable name ->
+                            yield name
+                        | Application (func, arg) ->
+                            yield! loop func
+                            yield! loop arg
+                        | Lambda (param, body) ->
+                            yield param
+                            yield! loop body
+                }
+            loop expr |> Set.ofSeq
+
+        /// Replaces all occurrences of oldParam with newExpr in oldExpr.
+        let rec subst oldParam oldExpr =
+            let subst = subst oldParam
+            match oldExpr with
+                | Variable name ->
+                    if name = oldParam then newExpr      // replace this variable with the new expression
+                    else oldExpr                         // no-op
+                | Application (func, arg) ->
+                    Application (subst func, subst arg)
+                | Lambda (param, body) ->
+                    if param = oldParam then oldExpr     // no-op (don't actually substitute anything)
+                    elif occursFree param newExpr then   // avoid variable capture via α-conversion
+                        let allVars = allVariables oldExpr
+                        ['a' .. 'z']
+                            |> Seq.map (fun c -> c.ToString())
+                            |> Seq.tryFind (fun newName ->
+                                not <| allVars.Contains(newName))
+                            |> Option.map (fun newName ->
+                                alphaConvert newName oldExpr |> subst)
+                            |> Option.defaultWith (fun () ->
+                                failwithf "Exhausted variable names for α-conversion")
+                    else Lambda (param, subst body)      // substitute new expression in lambda body
+                        
+
+        match lambda with
+            | Lambda (param, body) ->
+                subst param body
+            | _ -> failwithf "substitution not supported for %A" lambda
 
     let ofQuot = Expr.ofQuot
-    let True = ofQuot <@@(fun x y -> x)@@>
-    let Identity = ofQuot <@@(fun x -> x)@@>
+    let True = ofQuot <@@fun x y -> x@@>
+    let Identity = ofQuot <@@fun x -> x@@>
 
 module Program =
 
