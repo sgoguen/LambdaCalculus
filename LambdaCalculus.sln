@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.489
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LambdaCalculus", "LambdaCalculus\LambdaCalculus.fsproj", "{5766DF43-6693-40F8-926A-6A94CF4D5624}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LambdaCalculusUnitTest", "LambdaCalculusUnitTest\LambdaCalculusUnitTest.fsproj", "{5D9C1635-7F8A-4550-9DDD-F7D8D9F0853F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{5766DF43-6693-40F8-926A-6A94CF4D5624}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5766DF43-6693-40F8-926A-6A94CF4D5624}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5766DF43-6693-40F8-926A-6A94CF4D5624}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D9C1635-7F8A-4550-9DDD-F7D8D9F0853F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D9C1635-7F8A-4550-9DDD-F7D8D9F0853F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D9C1635-7F8A-4550-9DDD-F7D8D9F0853F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D9C1635-7F8A-4550-9DDD-F7D8D9F0853F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

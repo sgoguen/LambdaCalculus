@@ -1,4 +1,6 @@
-﻿open System
+﻿namespace LambdaCalculus
+
+open System
 
 type Variable = string (*name*)
 
@@ -11,27 +13,44 @@ type Term =
     member this.String =
         match this with
             | Variable name -> name
-            | Application (func, arg) -> sprintf "%A%A" func arg
+            | Application (func, arg) -> sprintf "(%A %A)" func arg
             | Lambda (param, body) -> sprintf "λ%s.%A" param body
 
     override this.ToString() = this.String
 
 module Term =
 
-    let rec ofExpr =
+    module private Expr =
+        open Microsoft.FSharp.Quotations.Patterns
+        let rec ofExpr =
+            function
+                | Var var ->
+                    Variable var.Name
+                | Application (func, arg) ->
+                    Application (ofExpr func, ofExpr arg)
+                | Lambda (param, body) ->
+                    Lambda (param.Name, ofExpr body)
+                | expr -> failwithf "Not supported: %A" expr
+
+    let rec occursFree name =
         function
-            | Microsoft.FSharp.Quotations.Patterns.Var var ->
-                Variable var.Name
-            | Microsoft.FSharp.Quotations.Patterns.Application (func, arg) ->
-                Application (ofExpr func, ofExpr arg)
-            | Microsoft.FSharp.Quotations.Patterns.Lambda (param, body) ->
-                Lambda (param.Name, ofExpr body)
-            | expr -> failwithf "Not supported: %A" expr
+            | Variable name' ->
+                name' = name
+            | Application (func, arg) ->
+                occursFree name func || occursFree name arg
+            | Lambda (param, body) ->
+                (param <> name) && occursFree name body
 
+    let ofExpr = Expr.ofExpr
     let True = ofExpr <@@(fun x y -> x)@@>
+    let Identity = ofExpr <@@(fun x -> x)@@>
 
-[<EntryPoint>]
-let main argv =
-    Console.OutputEncoding <- Text.Encoding.Unicode
-    printfn "True: %A" Term.True
-    0
+module Program =
+
+    [<EntryPoint>]
+    let main argv =
+        Console.OutputEncoding <- Text.Encoding.Unicode
+        let f = Application (Term.Identity, Variable "y")
+        printfn "%A" f
+        printfn "%A" Term.True
+        0
