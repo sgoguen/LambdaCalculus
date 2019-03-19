@@ -246,15 +246,24 @@ module Expr =
                 | Lambda (param, body) ->
                     Lambda (param, reduceLazy body)
 
-        let rec loop n seen expr =
-            printfn "%d" n
-            if Set.contains expr seen then expr   // infinite loop detected
-            elif containsBetaRedex expr then
-                let seen = Set.add expr seen
-                reduceStrict expr |> loop (n + 1) seen
+        let depth expr =
+            let rec loop n =
+                function
+                    | Variable _ -> n
+                    | Application (func, arg) ->
+                        max (loop (n + 1) func) (loop (n + 1) arg)
+                    | Lambda (_, body) ->
+                        loop (n + 1) body
+            loop 1 expr
+
+        let rec loop n expr =
+            if n % 1000 = 0 then
+                printfn "%d: %d" n (depth expr)
+            if containsBetaRedex expr then
+                reduceStrict expr |> loop (n + 1)
             else expr
 
-        loop 1 Set.empty expr
+        loop 1 expr
 
 [<AutoOpen>]
 module Lang =
