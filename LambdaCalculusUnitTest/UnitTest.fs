@@ -2,7 +2,6 @@
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open LambdaCalculus
-open System
 
 [<TestClassAttribute>]
 type UnitTest() =
@@ -141,4 +140,22 @@ type UnitTest() =
 
         let expr =
             sprintf "((%A %A) %A)" Mult Two Three |> run
+        Assert.AreEqual(Six, expr)
+
+    [<TestMethod>]
+    member __.Factorial() =
+        let IsZero =
+            sprintf "λn.((n λx.%A) %A)" False True
+                |> Expr.parse
+        let Pred =
+            "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
+                |> Expr.parse
+        let Afactorial =
+            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+                |> Expr.parse
+        let Factorial =
+            sprintf "(%A %A)" Y Afactorial
+                |> Expr.parse
+        let expr =
+            sprintf "(%A %A)" Factorial Three |> run
         Assert.AreEqual(Six, expr)

@@ -231,9 +231,26 @@ module Lang =
     let Plus = <@@ fun m n f x -> (n f) ((m f) x) @@> |> Expr.ofQuot
     let Mult = <@@ fun m n f -> m (n f) @@> |> Expr.ofQuot
 
+    let Y = "λh.(λx.(h (x x)) λx.(h (x x)))" |> Expr.parse
+
 module Program =
 
     [<EntryPoint>]
     let main argv =
         Console.OutputEncoding <- Text.Encoding.Unicode
+        let IsZero =
+            sprintf "λn.((n λx.%A) %A)" False True
+                |> Expr.parse
+        let Pred =
+            "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
+                |> Expr.parse
+        let Afactorial =
+            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+                |> Expr.parse
+        let Factorial =
+            sprintf "(%A %A)" Y Afactorial
+                |> Expr.parse
+        let expr =
+            sprintf "(%A %A)" Factorial Three |> Expr.parse |> Expr.eval
+        printfn "%A" expr
         0
