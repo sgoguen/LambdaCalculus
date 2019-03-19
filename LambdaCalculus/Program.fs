@@ -191,24 +191,46 @@ module Expr =
     /// Reduces a β-reduction expression ("β-redex"). This is
     /// function evaluation, which "calls" the given lambda
     /// with the given argument.
-    let betaReduction =
+    let betaReduce =
         function
             | Application (Lambda (param, body), arg) ->
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
     /// Evaluates the given expression lazily (normal order).
+    /// See reduceLeftmostOutermostBetaRedex and reduceToNormalForm in
+    /// https://opendsa-server.cs.vt.edu/ODSA/AV/PL/interpreters/lambdacalc/version1.4.used.in.book/scripts/interpreter.js
     let rec eval expr =
-        match expr with
-            | Application (Lambda (param, body), arg) ->
-                substitute arg param body |> eval
-            | Application (func, arg) ->
-                let expr' = Application (eval func, eval arg)
-                if expr' = expr then expr   // avoid infinite recursion
-                else eval expr'
-            | Lambda (param, body) ->
-                Lambda (param, eval body)
-            | expr -> expr
+
+        let rec containsBetaRedex =
+            function
+                | Variable _ -> false
+                | Application (Lambda (_, _), _) -> true   // beta-redex
+                | Application (func, arg) ->
+                    containsBetaRedex func || containsBetaRedex arg
+                | Lambda (_, body) ->
+                    containsBetaRedex body
+
+        let rec reduce expr =
+            match expr with
+                | Variable _ -> expr
+                | Application (Lambda (_, _), _) ->   // beta-redex
+                    betaReduce expr
+                | Application (func, arg) ->
+                    if containsBetaRedex func then
+                        Application (reduce func, arg)
+                    elif containsBetaRedex arg then
+                        Application (func, reduce arg)
+                    else expr
+                | Lambda (param, body) ->
+                    Lambda (param, reduce body)
+
+        let rec loop n expr =
+            if containsBetaRedex expr then
+                reduce expr |> loop (n + 1)
+            else expr
+
+        loop 1 expr
 
 [<AutoOpen>]
 module Lang =
@@ -251,6 +273,7 @@ module Program =
             sprintf "(%A %A)" Y Afactorial
                 |> Expr.parse
         let expr =
-            sprintf "(%A %A)" Factorial Three |> Expr.parse |> Expr.eval
+            sprintf "(%A %A)" Factorial Two |> Expr.parse |> Expr.eval
         printfn "%A" expr
+        printfn "%A" Two
         0

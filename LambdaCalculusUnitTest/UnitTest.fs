@@ -88,7 +88,7 @@ type UnitTest() =
     member __.βReduce1() =
         let actual =
             Expr.parse "(λx.(x v) (z (v u)))"
-                |> Expr.betaReduction
+                |> Expr.betaReduce
                 |> Expr.toString
         Assert.AreEqual("((z (v u)) v)", actual)
 
