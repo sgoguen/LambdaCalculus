@@ -197,73 +197,28 @@ module Expr =
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
-    /// Evaluates the given expression.
-    /// See reduceLeftmostOutermostBetaRedex and reduceToNormalForm in
+    /// Evaluates the given expression lazily. This is similar to, but simpler than
+    /// reference implementation for normal form. See reduceLeftmostOutermostBetaRedex
+    /// and reduceToNormalForm in
     /// https://opendsa-server.cs.vt.edu/ODSA/AV/PL/interpreters/lambdacalc/version1.4.used.in.book/scripts/interpreter.js
     let eval expr =
 
-        let isBetaRedex =
+        let rec reduce =
             function
-                | Application (Lambda (_, _), _) -> true
-                | _ -> false
-
-        let rec containsBetaRedex =
-            function
-                | Variable _ -> false
-                | Application (Lambda (_, _), _) -> true
+                | Application (Lambda (param, body), arg) ->
+                    substitute arg param body
                 | Application (func, arg) ->
-                    containsBetaRedex func || containsBetaRedex arg
-                | Lambda (_, body) ->
-                    containsBetaRedex body
-
-        /// Applicative order.
-        let rec reduceStrict expr =
-            match expr with
-                | Variable _ -> expr
-                | Application (func, arg) ->
-                    if containsBetaRedex func then
-                        Application (reduceStrict func, arg)
-                    elif containsBetaRedex arg then
-                        Application (func, reduceStrict arg)
-                    elif isBetaRedex expr then
-                        betaReduce expr
-                    else expr
+                    Application (reduce func, reduce arg)
                 | Lambda (param, body) ->
-                    Lambda (param, reduceStrict body)
+                    Lambda (param, reduce body)
+                | expr -> expr   // Variable
 
-        /// Normal order.
-        let rec reduceLazy expr =
-            match expr with
-                | Variable _ -> expr
-                | Application (Lambda (_, _), _) ->
-                    betaReduce expr
-                | Application (func, arg) ->
-                    if containsBetaRedex func then
-                        Application (reduceLazy func, arg)
-                    elif containsBetaRedex arg then
-                        Application (func, reduceLazy arg)
-                    else expr
-                | Lambda (param, body) ->
-                    Lambda (param, reduceLazy body)
+        let rec loop expr =
+            let expr' = reduce expr
+            if expr' = expr then expr   // can't be further reduced
+            else loop expr'
 
-        let depth expr =
-            let rec loop n =
-                function
-                    | Variable _ -> n
-                    | Application (func, arg) ->
-                        max (loop (n + 1) func) (loop (n + 1) arg)
-                    | Lambda (_, body) ->
-                        loop (n + 1) body
-            loop 1 expr
-
-        let rec loop n expr =
-            if n % 1000 = 0 then
-                printfn "%d: %d" n (depth expr)
-            if containsBetaRedex expr then
-                reduceStrict expr |> loop (n + 1)
-            else expr
-
-        loop 1 expr
+        loop expr
 
 [<AutoOpen>]
 module Lang =
@@ -286,27 +241,32 @@ module Lang =
     let Plus = <@@ fun m n f x -> (n f) ((m f) x) @@> |> Expr.ofQuot
     let Mult = <@@ fun m n f -> m (n f) @@> |> Expr.ofQuot
 
+    /// Y-combinator for recursion
     let Y = "λh.(λx.(h (x x)) λx.(h (x x)))" |> Expr.parse
 
 module Program =
 
     [<EntryPoint>]
     let main argv =
+
+        // display λ chars correctly
         Console.OutputEncoding <- Text.Encoding.Unicode
+
         let IsZero =
             sprintf "λn.((n λx.%A) %A)" False True
                 |> Expr.parse
         let Pred =
             "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
                 |> Expr.parse
-        let Afactorial =
-            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+        let CountNonRecursive =
+            sprintf "λg.λn.(((%A (%A n)) %A) (%A (g (%A n))))" If IsZero Zero Succ Pred
                 |> Expr.parse
-        let Factorial =
-            sprintf "(%A %A)" Y Afactorial
+        let CountRecursive =
+            sprintf "(%A %A)" Y CountNonRecursive
                 |> Expr.parse
         let expr =
-            sprintf "(%A %A)" Factorial Two |> Expr.parse |> Expr.eval
-        printfn "%A" expr
-        printfn "%A" Two
+            sprintf "(%A %A)" CountRecursive Six |> Expr.parse |> Expr.eval
+        printfn "Expected: %A" Six
+        printfn "Actual:   %A" expr
+
         0

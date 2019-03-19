@@ -143,19 +143,38 @@ type UnitTest() =
         Assert.AreEqual(Six, expr)
 
     [<TestMethod>]
-    member __.Factorial() =
+    member __.Recursion1() =
         let IsZero =
             sprintf "λn.((n λx.%A) %A)" False True
                 |> Expr.parse
         let Pred =
             "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
                 |> Expr.parse
-        let Afactorial =
-            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+        let CountNonRecursive =
+            sprintf "λg.λn.(((%A (%A n)) %A) (%A (g (%A n))))" If IsZero Zero Succ Pred   // let f n = (if n = 0 then 0 else Succ(Pred n))
                 |> Expr.parse
-        let Factorial =
-            sprintf "(%A %A)" Y Afactorial
+        let CountRecursive =
+            sprintf "(%A %A)" Y CountNonRecursive
                 |> Expr.parse
         let expr =
-            sprintf "(%A %A)" Factorial Three |> run
+            sprintf "(%A %A)" CountRecursive Six |> Expr.parse |> Expr.eval
         Assert.AreEqual(Six, expr)
+
+    /// Factorial is too slow to use as an example?
+    [<TestMethod>]
+    member __.Recursion2() =
+        let IsZero =
+            sprintf "λn.((n λx.%A) %A)" False True
+                |> Expr.parse
+        let Pred =
+            "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
+                |> Expr.parse
+        let FactorialNonRecursive =
+            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+                |> Expr.parse
+        let FactorialRecursive =
+            sprintf "(%A %A)" Y FactorialNonRecursive
+                |> Expr.parse
+        let expr =
+            sprintf "(%A %A)" FactorialRecursive Two |> run
+        Assert.AreEqual(Two, expr)
