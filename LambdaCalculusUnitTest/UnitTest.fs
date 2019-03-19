@@ -160,21 +160,34 @@ type UnitTest() =
             sprintf "(%A %A)" CountRecursive Six |> Expr.parse |> Expr.eval
         Assert.AreEqual(Six, expr)
 
-    /// Factorial is too slow to use as an example?
+    /// Factorial is too slow to use as an example, so let's try triangle numbers.
     [<TestMethod>]
     member __.Recursion2() =
+
         let IsZero =
             sprintf "λn.((n λx.%A) %A)" False True
                 |> Expr.parse
         let Pred =
             "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
                 |> Expr.parse
-        let FactorialNonRecursive =
-            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero One Mult Pred
+        let TriangleNonRecursive =
+            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero Zero Plus Pred
                 |> Expr.parse
-        let FactorialRecursive =
-            sprintf "(%A %A)" Y FactorialNonRecursive
+        let TriangleRecursive =
+            sprintf "(%A %A)" Y TriangleNonRecursive
                 |> Expr.parse
+
         let expr =
-            sprintf "(%A %A)" FactorialRecursive Two |> run
-        Assert.AreEqual(Two, expr)
+            sprintf "(%A %A)" TriangleRecursive One |> Expr.parse |> Expr.eval
+        printfn "%A" expr
+        Assert.AreEqual(One, expr)
+
+        let expr =
+            sprintf "(%A %A)" TriangleRecursive Two |> Expr.parse |> Expr.eval
+        printfn "%A" expr
+        Assert.AreEqual(Three, expr)
+
+        let expr =
+            sprintf "(%A %A)" TriangleRecursive Three |> Expr.parse |> Expr.eval
+        printfn "%A" expr
+        Assert.AreEqual(Six, expr)

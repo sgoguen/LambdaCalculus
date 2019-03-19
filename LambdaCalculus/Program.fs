@@ -259,15 +259,14 @@ module Program =
         let Pred =
             "λn.λf.λx.(((n λg.λh.(h (g f))) λu.x) λu.u)"
                 |> Expr.parse
-        let CountNonRecursive =
-            sprintf "λg.λn.(((%A (%A n)) %A) (%A (g (%A n))))" If IsZero Zero Succ Pred
+        let TriangleNonRecursive =
+            sprintf "λg.λn.(((%A (%A n)) %A) ((%A n) (g (%A n))))" If IsZero Zero Plus Pred
                 |> Expr.parse
-        let CountRecursive =
-            sprintf "(%A %A)" Y CountNonRecursive
+        let TriangleRecursive =
+            sprintf "(%A %A)" Y TriangleNonRecursive
                 |> Expr.parse
         let expr =
-            sprintf "(%A %A)" CountRecursive Six |> Expr.parse |> Expr.eval
-        printfn "Expected: %A" Six
-        printfn "Actual:   %A" expr
+            sprintf "(%A %A)" TriangleRecursive Three |> Expr.parse |> Expr.eval
+        printfn "%A" expr
 
         0
