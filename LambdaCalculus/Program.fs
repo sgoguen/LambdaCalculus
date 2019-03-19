@@ -197,9 +197,10 @@ module Expr =
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
-    /// Evaluates the given expression lazily. This is similar to, but simpler than
-    /// reference implementation for normal form. See reduceLeftmostOutermostBetaRedex
-    /// and reduceToNormalForm in
+    /// Evaluates the given expression lazily. This is similar
+    /// to, but simpler than, the reference implementation for
+    /// normal form. See reduceLeftmostOutermostBetaRedex and 
+    /// reduceToNormalForm in:
     /// https://opendsa-server.cs.vt.edu/ODSA/AV/PL/interpreters/lambdacalc/version1.4.used.in.book/scripts/interpreter.js
     let eval expr =
 
