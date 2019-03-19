@@ -205,7 +205,7 @@ module Expr =
         let rec containsBetaRedex =
             function
                 | Variable _ -> false
-                | Application (Lambda (_, _), _) -> true   // beta-redex
+                | Application (Lambda (_, _), _) -> true
                 | Application (func, arg) ->
                     containsBetaRedex func || containsBetaRedex arg
                 | Lambda (_, body) ->
@@ -214,7 +214,7 @@ module Expr =
         let rec reduce expr =
             match expr with
                 | Variable _ -> expr
-                | Application (Lambda (_, _), _) ->   // beta-redex
+                | Application (Lambda (_, _), _) ->
                     betaReduce expr
                 | Application (func, arg) ->
                     if containsBetaRedex func then
@@ -225,12 +225,15 @@ module Expr =
                 | Lambda (param, body) ->
                     Lambda (param, reduce body)
 
-        let rec loop n expr =
-            if containsBetaRedex expr then
-                reduce expr |> loop (n + 1)
+        let rec loop n seen expr =
+            if n > 1000 then expr                   // too many reduction steps
+            elif Set.contains expr seen then expr   // infinite loop detected
+            elif containsBetaRedex expr then
+                let seen = Set.add expr seen
+                reduce expr |> loop (n + 1) seen
             else expr
 
-        loop 1 expr
+        loop 1 Set.empty expr
 
 [<AutoOpen>]
 module Lang =
