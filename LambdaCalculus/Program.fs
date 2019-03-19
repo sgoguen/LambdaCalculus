@@ -200,7 +200,7 @@ module Expr =
     /// Evaluates the given expression lazily (normal order).
     /// See reduceLeftmostOutermostBetaRedex and reduceToNormalForm in
     /// https://opendsa-server.cs.vt.edu/ODSA/AV/PL/interpreters/lambdacalc/version1.4.used.in.book/scripts/interpreter.js
-    let rec eval expr =
+    let eval expr =
 
         let rec containsBetaRedex =
             function
@@ -226,8 +226,8 @@ module Expr =
                     Lambda (param, reduce body)
 
         let rec loop n seen expr =
-            if n > 1000 then expr                   // too many reduction steps
-            elif Set.contains expr seen then expr   // infinite loop detected
+            printfn "%d" n
+            if Set.contains expr seen then expr   // infinite loop detected
             elif containsBetaRedex expr then
                 let seen = Set.add expr seen
                 reduce expr |> loop (n + 1) seen
