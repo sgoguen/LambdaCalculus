@@ -237,6 +237,10 @@ module Lang =
     let Four =  <@@ fun f x -> f (f (f (f x))) @@> |> Expr.ofQuot
     let Five =  <@@ fun f x -> f (f (f (f (f x)))) @@> |> Expr.ofQuot
     let Six =   <@@ fun f x -> f (f (f (f (f (f x))))) @@> |> Expr.ofQuot
+    let Seven = <@@ fun f x -> f (f (f (f (f (f (f x)))))) @@> |> Expr.ofQuot
+    let Eight = <@@ fun f x -> f (f (f (f (f (f (f (f x))))))) @@> |> Expr.ofQuot
+    let Nine =  <@@ fun f x -> f (f (f (f (f (f (f (f (f x)))))))) @@> |> Expr.ofQuot
+    let Ten =   <@@ fun f x -> f (f (f (f (f (f (f (f (f (f x))))))))) @@> |> Expr.ofQuot
 
     let Succ = <@@ fun n f x -> f ((n f) x) @@> |> Expr.ofQuot
     let Plus = <@@ fun m n f x -> (n f) ((m f) x) @@> |> Expr.ofQuot
@@ -266,7 +270,7 @@ module Program =
             sprintf "(%A %A)" Y TriangleNonRecursive
                 |> Expr.parse
         let expr =
-            sprintf "(%A %A)" TriangleRecursive Three |> Expr.parse |> Expr.eval
+            sprintf "(%A %A)" TriangleRecursive Four |> Expr.parse |> Expr.eval
         printfn "%A" expr
 
         0

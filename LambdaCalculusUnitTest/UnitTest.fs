@@ -179,15 +179,16 @@ type UnitTest() =
 
         let expr =
             sprintf "(%A %A)" TriangleRecursive One |> Expr.parse |> Expr.eval
-        printfn "%A" expr
         Assert.AreEqual(One, expr)
 
         let expr =
             sprintf "(%A %A)" TriangleRecursive Two |> Expr.parse |> Expr.eval
-        printfn "%A" expr
         Assert.AreEqual(Three, expr)
 
         let expr =
             sprintf "(%A %A)" TriangleRecursive Three |> Expr.parse |> Expr.eval
-        printfn "%A" expr
         Assert.AreEqual(Six, expr)
+
+        let expr =
+            sprintf "(%A %A)" TriangleRecursive Four |> Expr.parse |> Expr.eval
+        Assert.AreEqual(Ten, expr)
