@@ -197,10 +197,15 @@ module Expr =
                 substitute arg param body
             | expr -> failwithf "%A is not a β-redex" expr
 
-    /// Evaluates the given expression lazily (normal order).
+    /// Evaluates the given expression.
     /// See reduceLeftmostOutermostBetaRedex and reduceToNormalForm in
     /// https://opendsa-server.cs.vt.edu/ODSA/AV/PL/interpreters/lambdacalc/version1.4.used.in.book/scripts/interpreter.js
     let eval expr =
+
+        let isBetaRedex =
+            function
+                | Application (Lambda (_, _), _) -> true
+                | _ -> false
 
         let rec containsBetaRedex =
             function
@@ -211,26 +216,42 @@ module Expr =
                 | Lambda (_, body) ->
                     containsBetaRedex body
 
-        let rec reduce expr =
+        /// Applicative order.
+        let rec reduceStrict expr =
+            match expr with
+                | Variable _ -> expr
+                | Application (func, arg) ->
+                    if containsBetaRedex func then
+                        Application (reduceStrict func, arg)
+                    elif containsBetaRedex arg then
+                        Application (func, reduceStrict arg)
+                    elif isBetaRedex expr then
+                        betaReduce expr
+                    else expr
+                | Lambda (param, body) ->
+                    Lambda (param, reduceStrict body)
+
+        /// Normal order.
+        let rec reduceLazy expr =
             match expr with
                 | Variable _ -> expr
                 | Application (Lambda (_, _), _) ->
                     betaReduce expr
                 | Application (func, arg) ->
                     if containsBetaRedex func then
-                        Application (reduce func, arg)
+                        Application (reduceLazy func, arg)
                     elif containsBetaRedex arg then
-                        Application (func, reduce arg)
+                        Application (func, reduceLazy arg)
                     else expr
                 | Lambda (param, body) ->
-                    Lambda (param, reduce body)
+                    Lambda (param, reduceLazy body)
 
         let rec loop n seen expr =
             printfn "%d" n
             if Set.contains expr seen then expr   // infinite loop detected
             elif containsBetaRedex expr then
                 let seen = Set.add expr seen
-                reduce expr |> loop (n + 1) seen
+                reduceStrict expr |> loop (n + 1) seen
             else expr
 
         loop 1 Set.empty expr
