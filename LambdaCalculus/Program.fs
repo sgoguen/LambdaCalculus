@@ -176,7 +176,7 @@ module Expr =
             | Lambda (param', body') ->
                 if param' = param then body         // no-op (don't actually substitute anything)
                 elif occursFree param' arg then     // avoid variable capture
-                    let allVars = allVariables body'
+                    let allVars = allVariables body
                     ['a' .. 'z']
                         |> Seq.map (fun c -> c.ToString())
                         |> Seq.tryFind (fun newName ->
