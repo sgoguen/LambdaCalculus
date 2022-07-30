@@ -2,6 +2,7 @@
 
 open Microsoft.VisualStudio.TestTools.UnitTesting
 open LambdaCalculus
+open LambdaCalculus.Parser
 
 [<TestClassAttribute>]
 type UnitTest() =
