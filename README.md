@@ -4,7 +4,7 @@ This is a fork of [Brian Bern's](https://github.com/brianberns/) [Lambda Calculu
 
 ## Enhancements
 
-* I wanted to create a function that effectively maps each nutural number to a unique lambda function so that it creates a bijection between all natural numbers and all lambda functions.
+* I wanted to create a function that effectively maps each nutural number to a unique lambda function so that it creates a bijection between all natural numbers and all **representable** lambda functions. This is basically a form of ordered & compact serialization, nothing like [this](https://proofwiki.org/wiki/Natural_Number_Functions_are_Uncountable).
 * This effectively would let you address lambda functions by their index.
 * Added a DeBruijn expression model, which is used as an intermediate step to transform Natual numbers to Lambda functions.
 
