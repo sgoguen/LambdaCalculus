@@ -14,8 +14,7 @@ module Expr = begin
             Char.IsLetterOrDigit(c) && (c <> 'λ')))
 
     let private parseVariable =
-        parseName
-            |>> Variable
+        parseName |>> Variable
 
     let private parseApplication =
         pipe5

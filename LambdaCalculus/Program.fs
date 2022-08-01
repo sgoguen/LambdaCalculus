@@ -89,4 +89,12 @@ module Program =
 
         printfn "%A" expr
 
+        //  Let's enumerate the first 100 terms
+        for i in 0..10 do 
+            let db = DExpr.intToLambda i
+            let dbs = db |> DExpr.toString
+            let o = DExpr.lambdaToInt db
+            let e = Expr.fromDBExpr db
+            printfn "%i - %i - %A - %s" i o e dbs
+
         0
